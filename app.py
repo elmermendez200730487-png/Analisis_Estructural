@@ -110,7 +110,7 @@ if st.button("Resolver Sistema Hiperestático", type="primary"):
             fig_m = ss.show_bending_moment(show=False)
             st.pyplot(fig_m)
             
-       st.subheader("Deformación")
+      st.subheader("Deformación")
         fig_d = ss.show_displacement(show=False)
         st.pyplot(fig_d)
         
