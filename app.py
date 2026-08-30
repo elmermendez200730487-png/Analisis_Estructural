@@ -110,9 +110,38 @@ if st.button("Resolver Sistema Hiperestático", type="primary"):
             fig_m = ss.show_bending_moment(show=False)
             st.pyplot(fig_m)
             
-        st.subheader("Deformación")
+       st.subheader("Deformación")
         fig_d = ss.show_displacement(show=False)
         st.pyplot(fig_d)
+        
+        # --- NUEVO: EXTRACCIÓN Y TABLA DE DATOS DE DEFORMACIÓN ---
+        st.divider()
+        st.subheader("📊 Datos Numéricos de Deformación por Nodo")
+        
+        # Extraer los datos del motor
+        desplazamientos = ss.get_node_displacements()
+        datos_tabla = []
+        
+        for i, x_val in enumerate(puntos):
+            nodo_id = i + 1
+            # Buscar los datos correspondientes a este nodo en la lista
+            disp = next((d for d in desplazamientos if d["id"] == nodo_id), {})
+            
+            if disp:
+                datos_tabla.append({
+                    "Nodo": nodo_id,
+                    "Posición X (m)": round(x_val, 4),
+                    "Deflexión Vertical Y (m)": round(disp.get('uy', 0), 6),
+                    "Giro / Rotación Z (rad)": round(disp.get('phi_z', disp.get('phi_y', 0)), 6)
+                })
+                
+        # Mostrar tabla interactiva
+        st.dataframe(datos_tabla, use_container_width=True)
+        
+        # Opcional: Mostrar reacciones en los apoyos
+        st.subheader("🛑 Reacciones en los Apoyos")
+        reacciones = ss.get_node_results_system()
+        st.dataframe(reacciones, use_container_width=True)
 
     except Exception as e:
-        st.error("Error al resolver. Verifica que el sistema no sea inestable (necesita al menos 2 apoyos simples o 1 empotramiento).")
+        st.error(f"Error al resolver. Verifica que el sistema no sea inestable (necesita al menos 2 apoyos simples o 1 empotramiento). Detalle: {e}")
