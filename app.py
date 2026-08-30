@@ -62,4 +62,4 @@ if st.button("Generar Diagramas", type="primary"):
     st.write(f"- **Empotramientos en:** {pos_empotramientos} m")
     st.write(f"- **Soportes en:** {pos_soportes} m")
     st.write(f"- **Cargas Puntuales:** {cargas_puntuales}")
-    st.write(f"- **Cargas Distribuidas:** {cargas_distribuidas}")el sistema sea estable (isostático).")
+    st.write(f"- **Cargas Distribuidas:** {cargas_distribuidas}")
