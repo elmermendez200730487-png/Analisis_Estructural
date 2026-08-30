@@ -1,46 +1,65 @@
 import streamlit as st
-from beambending import Beam
-import matplotlib.pyplot as plt
 
-# Título y descripción de la App web
-st.title("🏗️ Calculadora Estructural: Vigas")
-st.write("Generador de diagramas de Fuerza Cortante y Momento Flector.")
+st.set_page_config(layout="wide") # Hace la app más ancha
+st.title("🏗️ Calculadora Estructural Avanzada")
 
-# 1. Sección de Entradas del Usuario (Longitud y Apoyos)
-st.sidebar.header("1. Geometría de la Viga")
-L = st.sidebar.number_input("Longitud total (metros)", min_value=1.0, value=10.0, step=0.5)
+# --- 1. GEOMETRÍA ---
+st.header("1. Geometría de la Viga")
+L = st.number_input("Longitud total (metros)", min_value=1.0, value=10.0)
 
-st.sidebar.header("2. Posición de los Apoyos")
-apoyo_fijo = st.sidebar.number_input("Apoyo Fijo (m)", min_value=0.0, max_value=L, value=0.0)
-apoyo_movil = st.sidebar.number_input("Apoyo Móvil (m)", min_value=0.0, max_value=L, value=L)
+col1, col2 = st.columns(2)
 
-# 2. Sección de Cargas
-st.sidebar.header("3. Cargas")
-carga_puntual = st.sidebar.number_input("Carga Puntual (kN) *Usa negativo para hacia abajo*", value=-20.0)
-pos_carga = st.sidebar.number_input("Posición de la carga (m)", min_value=0.0, max_value=L, value=5.0)
+# --- 2. APOYOS Y EMPOTRAMIENTOS ---
+with col1:
+    st.subheader("Vínculos / Apoyos")
+    
+    # Empotramientos
+    num_empotramientos = st.selectbox("Cantidad de Empotramientos", [0, 1, 2])
+    pos_empotramientos = []
+    for i in range(num_empotramientos):
+        pos = st.number_input(f"Posición Empotramiento {i+1} (m)", 0.0, L, key=f"emp_{i}")
+        pos_empotramientos.append(pos)
 
-carga_dist = st.sidebar.number_input("Carga Distribuida (kN/m) *Negativo hacia abajo*", value=-5.0)
+    # Soportes simples/móviles
+    num_soportes = st.selectbox("Cantidad de Soportes Simples", [0, 1, 2, 3, 4], index=2)
+    pos_soportes = []
+    for i in range(num_soportes):
+        pos = st.number_input(f"Posición Soporte {i+1} (m)", 0.0, L, key=f"sop_{i}")
+        pos_soportes.append(pos)
 
-# Botón para calcular
-if st.button("Generar Diagramas"):
-    try:
-        # Lógica matemática usando la librería beam_bending
-        viga = Beam(L)
-        viga.pinned_support = apoyo_fijo
-        viga.rolling_support = apoyo_movil
-        
-        # Agregar cargas
-        viga.add_loads((carga_puntual, pos_carga))  # Carga puntual
-        if carga_dist != 0:
-            viga.add_distributed_load(carga_dist, (0, L)) # Carga distribuida en toda la viga
-        
-        # Crear la gráfica
-        fig = viga.plot()
-        
-        # Mostrar gráfica en la página web
-        st.pyplot(fig)
-        
-        st.success("¡Cálculo realizado con éxito!")
-        
-    except Exception as e:
-        st.error("Error en el cálculo. Verifica que el sistema sea estable (isostático).")
+# --- 3. CARGAS ---
+with col2:
+    st.subheader("Cargas")
+    
+    # Cargas Puntuales
+    num_puntuales = st.selectbox("Cantidad de Cargas Puntuales", [0, 1, 2, 3, 4, 5], index=1)
+    cargas_puntuales = []
+    for i in range(num_puntuales):
+        with st.expander(f"Configurar Carga Puntual {i+1}"):
+            fuerza = st.number_input("Fuerza (kN) [Negativo = hacia abajo]", value=-10.0, key=f"fp_{i}")
+            pos = st.number_input("Posición en X (m)", 0.0, L, key=f"posp_{i}")
+            cargas_puntuales.append((fuerza, pos))
+
+    # Cargas Distribuidas
+    num_distribuidas = st.selectbox("Cantidad de Cargas Distribuidas", [0, 1, 2, 3, 4, 5], index=1)
+    cargas_distribuidas = []
+    for i in range(num_distribuidas):
+        with st.expander(f"Configurar Carga Distribuida {i+1}"):
+            tipo = st.radio("Tipo", ["Rectangular", "Triangular"], key=f"tipo_{i}")
+            w_inicio = st.number_input("Magnitud Inicio (kN/m)", value=-5.0, key=f"wi_{i}")
+            w_fin = st.number_input("Magnitud Fin (kN/m)", value=-5.0 if tipo == "Rectangular" else 0.0, key=f"wf_{i}")
+            x_inicio = st.number_input("Desde X (m)", 0.0, L, value=0.0, key=f"xi_{i}")
+            x_fin = st.number_input("Hasta X (m)", 0.0, L, value=L, key=f"xf_{i}")
+            cargas_distribuidas.append((tipo, w_inicio, w_fin, x_inicio, x_fin))
+
+# --- BOTÓN DE CÁLCULO ---
+st.divider()
+if st.button("Generar Diagramas", type="primary"):
+    st.info("Aquí conectaremos el nuevo motor matemático hiperestático.")
+    
+    # Mostrar resumen de lo que el usuario ingresó (para verificar)
+    st.write("### Datos ingresados para el cálculo:")
+    st.write(f"- **Empotramientos en:** {pos_empotramientos} m")
+    st.write(f"- **Soportes en:** {pos_soportes} m")
+    st.write(f"- **Cargas Puntuales:** {cargas_puntuales}")
+    st.write(f"- **Cargas Distribuidas:** {cargas_distribuidas}")el sistema sea estable (isostático).")
