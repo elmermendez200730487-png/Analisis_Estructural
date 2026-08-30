@@ -1,2 +1,2 @@
 # Analisis_Estructural
-Aplicacion para analisar vigas
+Aplicacion para analizar vigas
