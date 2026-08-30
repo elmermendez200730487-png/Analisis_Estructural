@@ -91,7 +91,6 @@ except Exception as e:
     st.info("Agrega los apoyos para ver la estructura graficada.")
 
 st.divider()
-
 # --- 6. CÁLCULO Y DIAGRAMAS ---
 if st.button("Resolver Sistema Hiperestático", type="primary"):
     try:
@@ -110,11 +109,11 @@ if st.button("Resolver Sistema Hiperestático", type="primary"):
             fig_m = ss.show_bending_moment(show=False)
             st.pyplot(fig_m)
             
-st.subheader("Deformación")
+        st.subheader("Deformación")
         fig_d = ss.show_displacement(show=False)
         st.pyplot(fig_d)
         
-        # --- NUEVO: EXTRACCIÓN Y TABLA DE DATOS DE DEFORMACIÓN ---
+        # --- EXTRACCIÓN Y TABLA DE DATOS DE DEFORMACIÓN ---
         st.divider()
         st.subheader("📊 Datos Numéricos de Deformación por Nodo")
         
@@ -138,7 +137,7 @@ st.subheader("Deformación")
         # Mostrar tabla interactiva
         st.dataframe(datos_tabla, use_container_width=True)
         
-        # Opcional: Mostrar reacciones en los apoyos
+        # Mostrar reacciones en los apoyos
         st.subheader("🛑 Reacciones en los Apoyos")
         reacciones = ss.get_node_results_system()
         st.dataframe(reacciones, use_container_width=True)
