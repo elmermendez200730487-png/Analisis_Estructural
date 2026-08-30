@@ -1,3 +1,5 @@
 streamlit
-beam-bending
+numpy
+sympy
 matplotlib
+beam-bending
