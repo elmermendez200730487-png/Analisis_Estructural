@@ -21,7 +21,7 @@ with col1:
         pos_empotramientos.append(pos)
 
     # Soportes simples/móviles
-    num_soportes = st.selectbox("Cantidad de Soportes Simples", [0, 1, 2, 3, 4], index=2)
+    num_soportes = st.selectbox("Cantidad de Soportes Simples", [0, 1, 2, 3, 4, 5], index=2)
     pos_soportes = []
     for i in range(num_soportes):
         pos = st.number_input(f"Posición Soporte {i+1} (m)", 0.0, L, key=f"sop_{i}")
