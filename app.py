@@ -1,5 +1,5 @@
 import streamlit as st
-from beam_bending import Beam
+from beambending import Beam
 import matplotlib.pyplot as plt
 
 # Título y descripción de la App web
