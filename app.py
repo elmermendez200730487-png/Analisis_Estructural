@@ -1,10 +1,9 @@
 import streamlit as st
 from anastruct import SystemElements
 import matplotlib.pyplot as plt
-import numpy as np
 
 st.set_page_config(layout="wide")
-st.title("🏗️ Motor de Análisis Hiperestático (Método Matricial)")
+st.title("🏗️ Motor de Análisis Hiperestático")
 
 # --- 1. GEOMETRÍA ---
 st.header("1. Geometría de la Viga")
@@ -45,54 +44,60 @@ with col2:
 
 st.divider()
 
-# --- 4. MOTOR MATRICIAL ---
+# --- 4. CONSTRUCCIÓN DEL MODELO EN TIEMPO REAL ---
+# (Esto se ejecuta automáticamente en cada cambio para actualizar el dibujo)
+ss = SystemElements()
+
+# Identificar nodos
+puntos = [0.0, L] + pos_empotramientos + pos_soportes + [p[1] for p in cargas_puntuales]
+for c in cargas_distribuidas:
+    puntos.extend([c[2], c[3]])
+    
+puntos = sorted(list(set([round(p, 4) for p in puntos])))
+
+# Crear elementos
+for i in range(len(puntos) - 1):
+    ss.add_element(location=[[puntos[i], 0], [puntos[i+1], 0]])
+
+def get_node(x_val):
+    return puntos.index(round(x_val, 4)) + 1
+
+# Agregar apoyos
+for pos in pos_empotramientos:
+    ss.add_support_fixed(node_id=get_node(pos))
+for pos in pos_soportes:
+    ss.add_support_hinged(node_id=get_node(pos))
+
+# Agregar cargas
+for fuerza, pos in cargas_puntuales:
+    ss.point_load(node_id=get_node(pos), Fx=0, Fy=fuerza)
+
+for wi, wf, xi, xf in cargas_distribuidas:
+    if xi == xf: continue
+    for i in range(len(puntos) - 1):
+        x1, x2 = puntos[i], puntos[i+1]
+        centro = (x1 + x2) / 2.0
+        if xi - 0.001 <= centro <= xf + 0.001:
+            q1 = wi + (wf - wi) * (x1 - xi) / (xf - xi)
+            q2 = wi + (wf - wi) * (x2 - xi) / (xf - xi)
+            ss.q_load(q=[q1, q2], element_id=i+1, direction='y')
+
+# --- 5. VISTA PREVIA EN TIEMPO REAL ---
+st.subheader("👀 Vista Previa de la Estructura")
+try:
+    fig_struct = ss.show_structure(show=False)
+    st.pyplot(fig_struct)
+except Exception as e:
+    st.info("Agrega los apoyos para ver la estructura graficada.")
+
+st.divider()
+
+# --- 6. CÁLCULO Y DIAGRAMAS ---
 if st.button("Resolver Sistema Hiperestático", type="primary"):
     try:
-        ss = SystemElements()
+        ss.solve() # Aquí es donde realmente se invierte la matriz
         
-        # A. Identificar todos los Nodos (Puntos de interés)
-        puntos = [0.0, L] + pos_empotramientos + pos_soportes + [p[1] for p in cargas_puntuales]
-        for c in cargas_distribuidas:
-            puntos.extend([c[2], c[3]])
-            
-        # Limpiar y ordenar nodos únicos
-        puntos = sorted(list(set([round(p, 4) for p in puntos])))
-
-        # B. Ensamblar matriz de elementos
-        for i in range(len(puntos) - 1):
-            ss.add_element(location=[[puntos[i], 0], [puntos[i+1], 0]])
-
-        def get_node(x_val):
-            return puntos.index(round(x_val, 4)) + 1
-
-        # C. Aplicar condiciones de frontera (Apoyos)
-        for pos in pos_empotramientos:
-            ss.add_support_fixed(node_id=get_node(pos))
-        for pos in pos_soportes:
-            ss.add_support_hinged(node_id=get_node(pos))
-
-        # D. Aplicar vector de fuerzas
-        for fuerza, pos in cargas_puntuales:
-            ss.point_load(node_id=get_node(pos), Fx=0, Fy=fuerza)
-
-        for wi, wf, xi, xf in cargas_distribuidas:
-            if xi == xf: continue
-            # Dividir la carga en los sub-elementos correspondientes
-            for i in range(len(puntos) - 1):
-                x1, x2 = puntos[i], puntos[i+1]
-                centro = (x1 + x2) / 2.0
-                
-                if xi - 0.001 <= centro <= xf + 0.001:
-                    # Interpolación lineal para cargas trapezoidales/triangulares
-                    q1 = wi + (wf - wi) * (x1 - xi) / (xf - xi)
-                    q2 = wi + (wf - wi) * (x2 - xi) / (xf - xi)
-                    ss.q_load(q=[q1, q2], element_id=i+1, direction='y')
-
-        # E. Inversión de matriz y resolución
-        ss.solve()
-
-        # F. Post-procesamiento gráfico
-        st.success("Matriz ensamblada y resuelta con éxito.")
+        st.success("Cálculo realizado con éxito.")
         
         c1, c2 = st.columns(2)
         with c1:
@@ -105,9 +110,9 @@ if st.button("Resolver Sistema Hiperestático", type="primary"):
             fig_m = ss.show_bending_moment(show=False)
             st.pyplot(fig_m)
             
-        st.subheader("Deformación Estructural")
+        st.subheader("Deformación")
         fig_d = ss.show_displacement(show=False)
         st.pyplot(fig_d)
 
     except Exception as e:
-        st.error(f"Error al resolver la matriz. Asegúrate de que el sistema sea estable (mínimo 2 apoyos simples o 1 empotramiento). Detalle: {e}")
+        st.error("Error al resolver. Verifica que el sistema no sea inestable (necesita al menos 2 apoyos simples o 1 empotramiento).")
