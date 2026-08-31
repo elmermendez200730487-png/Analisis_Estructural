@@ -3,7 +3,8 @@ from anastruct import SystemElements
 import matplotlib.pyplot as plt
 
 st.set_page_config(layout="wide")
-st.title("🏗️ Análisis Hiperestático REMASYS")
+st.title("🏗️ Análisis Hiperestático 
+REMASYS")
 
 # --- 1. GEOMETRÍA ---
 st.header("1. Geometría de la Viga")
